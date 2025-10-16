@@ -17,23 +17,43 @@ export class GameEngine {
   private readonly renderer: Renderer;
   private readonly loop: Loop;
   private readonly input: InputSystem;
-  private readonly aiSystem = new AISystem();
-  private readonly particleSystem = new ParticleSystem();
-  private readonly soundSystem = new SoundSystem();
+  private readonly aiSystem: AISystem;
+  private readonly particleSystem: ParticleSystem;
+  private readonly soundSystem: SoundSystem;
   private readonly background: Background;
-  private readonly hud = new Hud();
+  private readonly hud: Hud;
 
   private readonly worldBounds: Rectangle;
-  private readonly foodLayer = new Container();
-  private readonly snakeLayer = new Container();
+  private readonly foodLayer: Container;
+  private readonly snakeLayer: Container;
 
-  private readonly snakes: Snake[] = [];
-  private readonly foods: Food[] = [];
+  private readonly snakes: Snake[];
+  private readonly foods: Food[];
 
-  private ambientTimer = 0;
+  private ambientTimer: number;
+  private readonly resizeListener: () => void;
 
-  constructor(mount: HTMLElement) {
-    this.renderer = new Renderer(mount);
+  static async create(mount: HTMLElement): Promise<GameEngine> {
+    const renderer = await Renderer.create(mount);
+    return new GameEngine(renderer);
+  }
+
+  /**
+   * Use {@link GameEngine.create} to instantiate the engine so that the renderer is
+   * properly initialised before the rest of the systems are mounted.
+   */
+  constructor(renderer: Renderer) {
+    this.renderer = renderer;
+    this.aiSystem = new AISystem();
+    this.particleSystem = new ParticleSystem();
+    this.soundSystem = new SoundSystem();
+    this.hud = new Hud();
+    this.foodLayer = new Container();
+    this.snakeLayer = new Container();
+    this.snakes = [];
+    this.foods = [];
+    this.ambientTimer = 0;
+
     this.worldBounds = new Rectangle(0, 0, this.renderer.screen.width, this.renderer.screen.height);
     this.background = new Background(this.worldBounds.width, this.worldBounds.height);
 
@@ -43,12 +63,13 @@ export class GameEngine {
     this.renderer.stage.addChild(this.snakeLayer);
     this.renderer.stage.addChild(this.hud.container);
 
-    this.input = new InputSystem(this.renderer.app.view as HTMLCanvasElement);
+    this.input = new InputSystem(this.renderer.view);
     this.soundSystem.unlock();
 
     this.loop = new Loop((delta) => this.update(delta));
 
-    window.addEventListener('resize', this.handleResize);
+    this.resizeListener = this.handleResize.bind(this);
+    window.addEventListener('resize', this.resizeListener);
     this.initializeSnakes();
     this.initializeFood();
     this.hud.resize(this.worldBounds.width);
@@ -61,7 +82,7 @@ export class GameEngine {
   destroy() {
     this.loop.stop();
     this.input.destroy();
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.resizeListener);
     this.renderer.destroy();
   }
 
@@ -217,10 +238,10 @@ export class GameEngine {
     }
   }
 
-  private handleResize = () => {
+  private handleResize() {
     this.worldBounds.width = this.renderer.screen.width;
     this.worldBounds.height = this.renderer.screen.height;
     this.background.resize(this.worldBounds.width, this.worldBounds.height);
     this.hud.resize(this.worldBounds.width);
-  };
+  }
 }

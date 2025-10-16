@@ -11,8 +11,13 @@ interface Particle {
  * Sistema simples para explos\u00f5es de part\u00edculas e efeitos atmosf\u00e9ricos.
  */
 export class ParticleSystem {
-  public readonly container = new Container();
-  private readonly particles: Particle[] = [];
+  public readonly container: Container;
+  private readonly particles: Particle[];
+
+  constructor() {
+    this.container = new Container();
+    this.particles = [];
+  }
 
   update(delta: number) {
     for (let i = this.particles.length - 1; i >= 0; i -= 1) {

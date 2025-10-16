@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.vscode/
+.DS_Store
+
+# TypeScript compiler output (should not be emitted)
+src/**/*.js

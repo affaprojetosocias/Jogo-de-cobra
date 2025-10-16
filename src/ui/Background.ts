@@ -1,15 +1,45 @@
 import { Container, Filter, Graphics } from 'pixi.js';
+import type { UniformGroup } from 'pixi.js';
+
+const DEFAULT_VERTEX = /* glsl */ `
+  in vec2 aPosition;
+  out vec2 vTextureCoord;
+
+  uniform vec4 uInputSize;
+  uniform vec4 uOutputFrame;
+  uniform vec4 uOutputTexture;
+
+  vec4 filterVertexPosition(void) {
+    vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
+
+    position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
+    position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
+
+    return vec4(position, 0.0, 1.0);
+  }
+
+  vec2 filterTextureCoord(void) {
+    return aPosition * (uOutputFrame.zw * uInputSize.zw);
+  }
+
+  void main(void) {
+    gl_Position = filterVertexPosition();
+    vTextureCoord = filterTextureCoord();
+  }
+`;
 
 /**
  * Fundo animado com gradiente din\u00e2mico.
  */
 export class Background {
-  public readonly container = new Container();
+  public readonly container: Container;
   private readonly gradient: Graphics;
   private readonly filter: Filter;
-  private time = 0;
+  private readonly timeUniform: UniformGroup<{ uTime: { type: 'f32'; value: number } }>;
+  private time: number;
 
   constructor(width: number, height: number) {
+    this.container = new Container();
     this.gradient = new Graphics();
     this.gradient.beginFill(0x000000, 1);
     this.gradient.drawRect(0, 0, width, height);
@@ -34,8 +64,17 @@ export class Background {
       }
     `;
 
-    this.filter = new Filter(undefined, fragment, { uTime: 0 });
+    this.filter = Filter.from({
+      gl: { vertex: DEFAULT_VERTEX, fragment },
+      resources: {
+        uTime: { type: 'f32', value: 0 }
+      }
+    });
+    this.timeUniform = this.filter.resources.uTime as UniformGroup<{
+      uTime: { type: 'f32'; value: number };
+    }>;
     this.gradient.filters = [this.filter];
+    this.time = 0;
   }
 
   resize(width: number, height: number) {
@@ -47,6 +86,7 @@ export class Background {
 
   update(delta: number) {
     this.time += delta;
-    this.filter.uniforms.uTime = this.time;
+    this.timeUniform.uniforms.uTime = this.time;
+    this.timeUniform.update();
   }
 }

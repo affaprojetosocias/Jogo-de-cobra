@@ -4,27 +4,48 @@ import { Point } from 'pixi.js';
  * Captura entrada de teclado e ponteiro para controlar a cobra do jogador.
  */
 export class InputSystem {
-  private turnLeft = false;
-  private turnRight = false;
-  private pointerActive = false;
-  private pointerPosition = new Point();
+  private readonly element: HTMLElement;
+  private turnLeft: boolean;
+  private turnRight: boolean;
+  private pointerActive: boolean;
+  private pointerPosition: Point;
 
-  constructor(private readonly element: HTMLElement) {
-    window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('keyup', this.onKeyUp);
-    element.addEventListener('pointerdown', this.onPointerDown);
-    element.addEventListener('pointermove', this.onPointerMove);
-    window.addEventListener('pointerup', this.onPointerUp);
-    window.addEventListener('blur', this.resetInput);
+  private readonly keyDownListener: (event: KeyboardEvent) => void;
+  private readonly keyUpListener: (event: KeyboardEvent) => void;
+  private readonly pointerDownListener: (event: PointerEvent) => void;
+  private readonly pointerMoveListener: (event: PointerEvent) => void;
+  private readonly pointerUpListener: (event: PointerEvent) => void;
+  private readonly resetListener: () => void;
+
+  constructor(element: HTMLElement) {
+    this.element = element;
+    this.turnLeft = false;
+    this.turnRight = false;
+    this.pointerActive = false;
+    this.pointerPosition = new Point();
+
+    this.keyDownListener = this.handleKeyDown.bind(this);
+    this.keyUpListener = this.handleKeyUp.bind(this);
+    this.pointerDownListener = this.handlePointerDown.bind(this);
+    this.pointerMoveListener = this.handlePointerMove.bind(this);
+    this.pointerUpListener = this.handlePointerUp.bind(this);
+    this.resetListener = this.resetInputState.bind(this);
+
+    window.addEventListener('keydown', this.keyDownListener);
+    window.addEventListener('keyup', this.keyUpListener);
+    element.addEventListener('pointerdown', this.pointerDownListener);
+    element.addEventListener('pointermove', this.pointerMoveListener);
+    window.addEventListener('pointerup', this.pointerUpListener);
+    window.addEventListener('blur', this.resetListener);
   }
 
   destroy() {
-    window.removeEventListener('keydown', this.onKeyDown);
-    window.removeEventListener('keyup', this.onKeyUp);
-    this.element.removeEventListener('pointerdown', this.onPointerDown);
-    this.element.removeEventListener('pointermove', this.onPointerMove);
-    window.removeEventListener('pointerup', this.onPointerUp);
-    window.removeEventListener('blur', this.resetInput);
+    window.removeEventListener('keydown', this.keyDownListener);
+    window.removeEventListener('keyup', this.keyUpListener);
+    this.element.removeEventListener('pointerdown', this.pointerDownListener);
+    this.element.removeEventListener('pointermove', this.pointerMoveListener);
+    window.removeEventListener('pointerup', this.pointerUpListener);
+    window.removeEventListener('blur', this.resetListener);
   }
 
   getTurnInput(directionAngle: number, headPosition: Point): number {
@@ -45,7 +66,7 @@ export class InputSystem {
     return turn;
   }
 
-  private onKeyDown = (event: KeyboardEvent) => {
+  private handleKeyDown(event: KeyboardEvent) {
     if (event.repeat) return;
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
       this.turnLeft = true;
@@ -53,39 +74,39 @@ export class InputSystem {
     if (event.code === 'ArrowRight' || event.code === 'KeyD') {
       this.turnRight = true;
     }
-  };
+  }
 
-  private onKeyUp = (event: KeyboardEvent) => {
+  private handleKeyUp(event: KeyboardEvent) {
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
       this.turnLeft = false;
     }
     if (event.code === 'ArrowRight' || event.code === 'KeyD') {
       this.turnRight = false;
     }
-  };
+  }
 
-  private onPointerDown = (event: PointerEvent) => {
+  private handlePointerDown(event: PointerEvent) {
     this.pointerActive = true;
     this.updatePointer(event);
-  };
+  }
 
-  private onPointerMove = (event: PointerEvent) => {
+  private handlePointerMove(event: PointerEvent) {
     if (!this.pointerActive) return;
     this.updatePointer(event);
-  };
+  }
 
-  private onPointerUp = () => {
+  private handlePointerUp() {
     this.pointerActive = false;
-  };
+  }
 
   private updatePointer(event: PointerEvent) {
     const rect = this.element.getBoundingClientRect();
     this.pointerPosition.set(event.clientX - rect.left, event.clientY - rect.top);
   }
 
-  private resetInput = () => {
+  private resetInputState() {
     this.turnLeft = false;
     this.turnRight = false;
     this.pointerActive = false;
-  };
+  }
 }

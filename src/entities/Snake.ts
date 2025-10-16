@@ -18,41 +18,59 @@ export interface SnakeConfig {
  * Representa uma cobra com movimento suave e corpo em segmentos neon.
  */
 export class Snake {
-  public readonly container = new Container();
+  public readonly container: Container;
   public readonly id: string;
   public readonly name: string;
   public readonly isPlayer: boolean;
   public readonly personality: SnakePersonality;
 
-  public alive = true;
-  public score = 0;
+  public alive: boolean;
+  public score: number;
 
-  private readonly segmentSpacing = 14;
-  private readonly radius = 12;
-  private readonly maxSpeed = 300;
+  private readonly segmentSpacing: number;
+  private readonly radius: number;
+  private readonly maxSpeed: number;
 
   private speed: number;
   private direction: number;
   private turnSpeed: number;
-  private targetLength = 220;
-  private readonly path: Point[] = [];
-  private readonly segments: Graphics[] = [];
+  private targetLength: number;
+  private readonly path: Point[];
+  private readonly segments: Graphics[];
   private readonly baseColor: number;
 
-  private pulseTimer = 0;
-  private turnInput = 0;
-  private dissolveProgress = 0;
-  private respawnCooldown = 0;
+  private pulseTimer: number;
+  private turnInput: number;
+  private dissolveProgress: number;
+  private respawnCooldown: number;
 
   constructor(options: SnakeConfig) {
+    this.container = new Container();
     this.id = options.id;
     this.name = options.name;
     this.isPlayer = options.isPlayer;
     this.personality = options.personality;
     this.baseColor = options.color;
+
+    this.segmentSpacing = 14;
+    this.radius = 12;
+    this.maxSpeed = 300;
+
+    this.alive = true;
+    this.score = 0;
+
     this.speed = options.baseSpeed;
     this.direction = options.initialDirection;
     this.turnSpeed = options.turnSpeed;
+    this.targetLength = 220;
+
+    this.path = [];
+    this.segments = [];
+
+    this.pulseTimer = 0;
+    this.turnInput = 0;
+    this.dissolveProgress = 0;
+    this.respawnCooldown = 0;
 
     const start = options.initialPosition.clone();
     this.path.push(start.clone(), start.clone(), start.clone());
@@ -110,6 +128,7 @@ export class Snake {
     this.alive = true;
     this.dissolveProgress = 0;
     this.container.alpha = 1;
+    this.respawnCooldown = 0;
   }
 
   update(delta: number, bounds: Rectangle) {

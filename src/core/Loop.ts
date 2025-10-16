@@ -2,11 +2,17 @@
  * Controla o loop principal usando requestAnimationFrame e calcula delta time.
  */
 export class Loop {
-  private rafId: number | null = null;
-  private lastTime = 0;
-  private running = false;
+  private rafId: number | null;
+  private lastTime: number;
+  private running: boolean;
+  private readonly onUpdate: (deltaSeconds: number) => void;
 
-  constructor(private readonly onUpdate: (deltaSeconds: number) => void) {}
+  constructor(onUpdate: (deltaSeconds: number) => void) {
+    this.onUpdate = onUpdate;
+    this.rafId = null;
+    this.lastTime = 0;
+    this.running = false;
+  }
 
   start() {
     if (this.running) return;

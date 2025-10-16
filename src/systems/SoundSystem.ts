@@ -1,11 +1,33 @@
 /**
  * Gera efeitos sonoros simples via Web Audio API.
  */
+const createAudioContext = () => {
+  if (typeof window === 'undefined') return null;
+  const AudioContextClass =
+    window.AudioContext ||
+    // @ts-expect-error - Safari ainda expõe apenas webkitAudioContext
+    window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  try {
+    return new AudioContextClass();
+  } catch (error) {
+    console.warn('[SoundSystem] Falha ao criar AudioContext', error);
+    return null;
+  }
+};
+
 export class SoundSystem {
-  private readonly context = typeof window !== 'undefined' ? new AudioContext() : null;
-  private musicNode: OscillatorNode | null = null;
-  private musicGain: GainNode | null = null;
-  private unlocked = false;
+  private readonly context: AudioContext | null;
+  private musicNode: OscillatorNode | null;
+  private musicGain: GainNode | null;
+  private unlocked: boolean;
+
+  constructor() {
+    this.context = createAudioContext();
+    this.musicNode = null;
+    this.musicGain = null;
+    this.unlocked = false;
+  }
 
   unlock() {
     if (!this.context || this.unlocked) return;

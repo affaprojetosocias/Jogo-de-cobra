@@ -9,15 +9,16 @@ export interface FoodConfig {
  * Representa uma comida flutuante que aumenta o tamanho das cobras.
  */
 export class Food {
-  public readonly container = new Container();
+  public readonly container: Container;
   public readonly radius: number;
   public readonly color: number;
 
   private readonly sprite: Graphics;
 
-  constructor(private readonly config: FoodConfig) {
+  constructor(config: FoodConfig) {
     this.radius = config.radius;
     this.color = config.color;
+    this.container = new Container();
     this.sprite = new Graphics();
     this.draw();
     this.container.addChild(this.sprite);

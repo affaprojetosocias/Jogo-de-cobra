@@ -11,17 +11,20 @@ interface RankingEntry {
  * HUD respons\u00e1vel por pontua\u00e7\u00f5es, ranking e barras de progresso.
  */
 export class Hud {
-  public readonly container = new Container();
+  public readonly container: Container;
   private readonly scoreText: Text;
   private readonly rankingTitle: Text;
-  private readonly rankingEntries: RankingEntry[] = [];
+  private readonly rankingEntries: RankingEntry[];
   private readonly background: Graphics;
 
-  private width = 0;
+  private width: number;
 
   constructor() {
+    this.container = new Container();
     this.background = new Graphics();
     this.container.addChild(this.background);
+    this.rankingEntries = [];
+    this.width = 0;
 
     this.scoreText = new Text({
       text: 'Score: 0',
@@ -29,10 +32,12 @@ export class Hud {
         fill: '#ffffff',
         fontSize: 24,
         fontFamily: 'Segoe UI',
-        dropShadow: true,
-        dropShadowBlur: 4,
-        dropShadowAlpha: 0.6,
-        dropShadowColor: '#0ff'
+        dropShadow: {
+          color: '#0ff',
+          blur: 4,
+          alpha: 0.6,
+          distance: 4
+        }
       })
     });
     this.scoreText.position.set(20, 20);
@@ -45,10 +50,12 @@ export class Hud {
         fontSize: 18,
         fontFamily: 'Segoe UI',
         letterSpacing: 1,
-        dropShadow: true,
-        dropShadowBlur: 3,
-        dropShadowAlpha: 0.5,
-        dropShadowColor: '#0ff'
+        dropShadow: {
+          color: '#0ff',
+          blur: 3,
+          alpha: 0.5,
+          distance: 4
+        }
       })
     });
     this.rankingTitle.position.set(20, 60);
@@ -78,10 +85,12 @@ export class Hud {
           fill: '#e0f7ff',
           fontSize: 14,
           fontFamily: 'Segoe UI',
-          dropShadow: true,
-          dropShadowBlur: 4,
-          dropShadowDistance: 0,
-          dropShadowColor: '#0ff'
+          dropShadow: {
+            color: '#0ff',
+            blur: 4,
+            distance: 0,
+            alpha: 0.5
+          }
         })
       });
       this.container.addChild(bar);
