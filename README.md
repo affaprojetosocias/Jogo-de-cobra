@@ -1,54 +1,53 @@
-# Snake.io+ 🐍
+# Snake.io+
 
-Um protótipo moderno do jogo Snake.io feito com TypeScript, Vite e Pixi.js.
+Jogo Snake.io+ moderno escrito em TypeScript, renderizado com Pixi.js e empacotado com Vite. O projeto foi estruturado para facilitar evolução para multiplayer em tempo real.
 
-## Requisitos
-- Node.js 18 ou superior
-- npm 9 ou superior
+## ✨ Recursos
 
-## Instalação
+- Movimento fluido com física baseada em direção e velocidade contínua.
+- 3 cobras controladas por IA com personalidades distintas.
+- Plano de fundo neon com gradiente dinâmico e partículas flutuantes.
+- UI com pontuação, ranking e barra de progresso de crescimento.
+- Efeitos sonoros (comer, morte e ambiente).
+- Sistema de partículas para explosões na morte das cobras.
+- Arquitetura modular organizada em módulos `core`, `entities`, `systems` e `ui`.
+
+## 🧩 Estrutura de pastas
+
+```
+src/
+  core/         # Motor do jogo, renderização e áudio
+  entities/     # Entidades principais (Snake, Food)
+  systems/      # Sistemas (input, IA, colisões, partículas)
+  ui/           # Componentes da interface (placar, ranking)
+```
+
+## 🚀 Como rodar
 
 ```bash
 npm install
-```
-
-## Desenvolvimento
-
-```bash
 npm run dev
 ```
 
-O servidor será iniciado em [http://localhost:5173](http://localhost:5173).
+O servidor de desenvolvimento estará disponível em `http://localhost:5173`.
 
-## Build de produção
+## 🏗️ Build de produção
 
 ```bash
 npm run build
-```
-
-## Preview da build
-
-```bash
 npm run preview
 ```
 
-## Geração deste README
+## 🔊 Controles
 
-```bash
-npm run generate:readme
-```
+- `←` / `A`: vira para a esquerda
+- `→` / `D`: vira para a direita
 
-## Estrutura do projeto
+## 🔮 Próximos passos sugeridos
 
-- `src/core`: loop do jogo, motor e serviços compartilhados
-- `src/entities`: entidades principais (cobras e comidas)
-- `src/systems`: sistemas de entrada, IA, som e colisões
-- `src/ui`: componentes de interface e HUD
+- Integrar comunicação em tempo real via WebSockets ou Supabase Realtime.
+- Adicionar matchmaking e sincronia de estado entre clientes.
+- Criar personalização avançada de skins e efeitos visuais.
+- Implementar painel de configurações (áudio, dificuldade da IA, etc.).
 
-## Controles
-
-- `A` ou ←: girar para a esquerda
-- `D` ou →: girar para a direita
-- Toque/arraste no mobile: acompanha a direção do dedo
-
-Aproveite para expandir este protótipo para multiplayer real usando WebSockets ou Supabase Realtime!
+Divirta-se evoluindo o Snake.io+! 🐍
