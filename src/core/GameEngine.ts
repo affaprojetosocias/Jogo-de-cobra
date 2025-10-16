@@ -14,26 +14,23 @@ import type { FoodConfig, RankingEntry, SnakeConfig } from './types';
  */
 export class GameEngine {
   private readonly renderer: Renderer;
-  private readonly snakes: Snake[] = [];
-  private readonly foods: Food[] = [];
-  private readonly soundManager = new SoundManager();
-  private readonly foodConfig: FoodConfig = {
-    radius: 12,
-    speedIncrement: 4,
-    growthAmount: 40
-  };
-  private inputSystem?: InputSystem;
-  private aiSystem?: AISystem;
-  private collisionSystem?: CollisionSystem;
-  private running = false;
-  private lastTime = 0;
-  private readonly gameBounds = { width: window.innerWidth, height: window.innerHeight };
+  private readonly loop: Loop;
+  private readonly input: InputSystem;
+  private readonly aiSystem: AISystem;
+  private readonly particleSystem: ParticleSystem;
+  private readonly soundSystem: SoundSystem;
+  private readonly background: Background;
+  private readonly hud: Hud;
 
-  private constructor(renderer: Renderer) {
-    this.renderer = renderer;
-  }
+  private readonly worldBounds: Rectangle;
+  private readonly foodLayer: Container;
+  private readonly snakeLayer: Container;
 
-  private ambientTimer = 0;
+  private readonly snakes: Snake[];
+  private readonly foods: Food[];
+
+  private ambientTimer: number;
+  private readonly resizeListener: () => void;
 
   static async create(mount: HTMLElement): Promise<GameEngine> {
     const renderer = await Renderer.create(mount);
@@ -46,6 +43,16 @@ export class GameEngine {
    */
   constructor(renderer: Renderer) {
     this.renderer = renderer;
+    this.aiSystem = new AISystem();
+    this.particleSystem = new ParticleSystem();
+    this.soundSystem = new SoundSystem();
+    this.hud = new Hud();
+    this.foodLayer = new Container();
+    this.snakeLayer = new Container();
+    this.snakes = [];
+    this.foods = [];
+    this.ambientTimer = 0;
+
     this.worldBounds = new Rectangle(0, 0, this.renderer.screen.width, this.renderer.screen.height);
     this.background = new Background(this.worldBounds.width, this.worldBounds.height);
 
@@ -60,7 +67,8 @@ export class GameEngine {
 
     this.loop = new Loop((delta) => this.update(delta));
 
-    window.addEventListener('resize', this.handleResize);
+    this.resizeListener = this.handleResize.bind(this);
+    window.addEventListener('resize', this.resizeListener);
     this.initializeSnakes();
     this.initializeFood();
     this.hud.resize(this.worldBounds.width);
@@ -73,8 +81,12 @@ export class GameEngine {
     requestAnimationFrame((time) => this.loop(time));
   }
 
-  private loop = (time: number) => {
-    if (!this.running) return;
+  destroy() {
+    this.loop.stop();
+    this.input.destroy();
+    window.removeEventListener('resize', this.resizeListener);
+    this.renderer.destroy();
+  }
 
     const delta = Math.min(0.05, (time - this.lastTime) / 1000);
     this.lastTime = time;
@@ -224,27 +236,10 @@ export class GameEngine {
     setTimeout(() => this.respawnSnake(snake), 2000);
   }
 
-  private respawnSnake(snake: Snake) {
-    const spawn = new Point(
-      Math.random() * this.gameBounds.width,
-      Math.random() * this.gameBounds.height
-    );
-    snake.reset(spawn);
-  }
-
-  private createRanking(): RankingEntry[] {
-    return this.snakes
-      .map<RankingEntry>((snake) => ({
-        id: snake.id,
-        score: snake.score,
-        length: snake.getLength(),
-        color: snake.color
-      }))
-      .sort((a, b) => {
-        if (b.score === a.score) {
-          return b.length - a.length;
-        }
-        return b.score - a.score;
-      });
+  private handleResize() {
+    this.worldBounds.width = this.renderer.screen.width;
+    this.worldBounds.height = this.renderer.screen.height;
+    this.background.resize(this.worldBounds.width, this.worldBounds.height);
+    this.hud.resize(this.worldBounds.width);
   }
 }

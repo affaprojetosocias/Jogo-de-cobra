@@ -17,10 +17,17 @@ const createAudioContext = () => {
 };
 
 export class SoundSystem {
-  private readonly context = createAudioContext();
-  private musicNode: OscillatorNode | null = null;
-  private musicGain: GainNode | null = null;
-  private unlocked = false;
+  private readonly context: AudioContext | null;
+  private musicNode: OscillatorNode | null;
+  private musicGain: GainNode | null;
+  private unlocked: boolean;
+
+  constructor() {
+    this.context = createAudioContext();
+    this.musicNode = null;
+    this.musicGain = null;
+    this.unlocked = false;
+  }
 
   unlock() {
     if (!this.context || this.unlocked) return;

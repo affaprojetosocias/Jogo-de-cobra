@@ -5,7 +5,13 @@ import { Emitter } from '@pixi/particle-emitter';
  * Gera partículas tanto para o plano de fundo quanto para explosões de morte.
  */
 export class ParticleSystem {
-  private readonly emitters: Emitter[] = [];
+  public readonly container: Container;
+  private readonly particles: Particle[];
+
+  constructor() {
+    this.container = new Container();
+    this.particles = [];
+  }
 
   constructor(private readonly container: Container) {}
 

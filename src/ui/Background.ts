@@ -32,13 +32,14 @@ const DEFAULT_VERTEX = /* glsl */ `
  * Fundo animado com gradiente din\u00e2mico.
  */
 export class Background {
-  public readonly container = new Container();
+  public readonly container: Container;
   private readonly gradient: Graphics;
   private readonly filter: Filter;
   private readonly timeUniform: UniformGroup<{ uTime: { type: 'f32'; value: number } }>;
-  private time = 0;
+  private time: number;
 
   constructor(width: number, height: number) {
+    this.container = new Container();
     this.gradient = new Graphics();
     this.gradient.beginFill(0x000000, 1);
     this.gradient.drawRect(0, 0, width, height);
@@ -73,6 +74,7 @@ export class Background {
       uTime: { type: 'f32'; value: number };
     }>;
     this.gradient.filters = [this.filter];
+    this.time = 0;
   }
 
   resize(width: number, height: number) {

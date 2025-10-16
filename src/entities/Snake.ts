@@ -6,6 +6,7 @@ import type { SnakeConfig } from '../core/types';
  * Contém dados de física e componentes gráficos para o loop de jogo.
  */
 export class Snake {
+  public readonly container: Container;
   public readonly id: string;
   public readonly container: Container;
   public readonly body: Point[] = [];
@@ -14,41 +15,53 @@ export class Snake {
   public readonly behavior: SnakeConfig['behavior'];
   public readonly isPlayer: boolean;
 
-  public direction: number = Math.random() * Math.PI * 2;
-  public speed: number;
-  public turnSpeed: number;
-  public pulse: number = 0;
-  public alive = true;
-  public score = 0;
+  public alive: boolean;
+  public score: number;
 
-  private length = 120;
-  private targetLength = 120;
-  private readonly initialLength = 120;
-  private readonly initialSpeed: number;
-  private readonly maxLength = 1200;
-  private readonly bodyGraphics: Graphics;
-  private deathTimer = 0;
+  private readonly segmentSpacing: number;
+  private readonly radius: number;
+  private readonly maxSpeed: number;
 
-  constructor(config: SnakeConfig, start: Point) {
-    this.id = config.id;
-    this.color = config.color;
-    this.neonColor = config.neonColor;
-    this.speed = config.initialSpeed;
-    this.initialSpeed = config.initialSpeed;
-    this.turnSpeed = config.turnSpeed;
-    this.behavior = config.behavior;
-    this.isPlayer = config.isPlayer;
+  private speed: number;
+  private direction: number;
+  private turnSpeed: number;
+  private targetLength: number;
+  private readonly path: Point[];
+  private readonly segments: Graphics[];
+  private readonly baseColor: number;
 
+  private pulseTimer: number;
+  private turnInput: number;
+  private dissolveProgress: number;
+  private respawnCooldown: number;
+
+  constructor(options: SnakeConfig) {
     this.container = new Container();
-    this.container.sortableChildren = true;
+    this.id = options.id;
+    this.name = options.name;
+    this.isPlayer = options.isPlayer;
+    this.personality = options.personality;
+    this.baseColor = options.color;
 
-    this.bodyGraphics = new Graphics();
-    const glow = new filters.BlurFilter();
-    glow.blur = 8;
-    glow.quality = 4;
-    this.bodyGraphics.filters = [glow];
+    this.segmentSpacing = 14;
+    this.radius = 12;
+    this.maxSpeed = 300;
 
-    this.container.addChild(this.bodyGraphics);
+    this.alive = true;
+    this.score = 0;
+
+    this.speed = options.baseSpeed;
+    this.direction = options.initialDirection;
+    this.turnSpeed = options.turnSpeed;
+    this.targetLength = 220;
+
+    this.path = [];
+    this.segments = [];
+
+    this.pulseTimer = 0;
+    this.turnInput = 0;
+    this.dissolveProgress = 0;
+    this.respawnCooldown = 0;
 
     this.body.push(new Point(start.x, start.y));
   }
@@ -136,8 +149,7 @@ export class Snake {
     this.score = 0;
     this.alive = true;
     this.container.alpha = 1;
-    this.pulse = 0;
-    this.updateGraphics();
+    this.respawnCooldown = 0;
   }
 
   getLength(): number {

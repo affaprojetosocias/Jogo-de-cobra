@@ -5,10 +5,8 @@ import { Container, Graphics, Point } from 'pixi.js';
  */
 export class Food {
   public readonly container: Container;
-  public readonly position: Point;
-  public radius: number;
-  private pulse = 0;
-  private readonly graphics: Graphics;
+  public readonly radius: number;
+  public readonly color: number;
 
   constructor(position: Point, radius: number, color: number) {
     this.position = position;
@@ -18,7 +16,13 @@ export class Food {
     this.container.addChild(this.graphics);
     this.container.position.copyFrom(position);
 
-    this.draw(color);
+  constructor(config: FoodConfig) {
+    this.radius = config.radius;
+    this.color = config.color;
+    this.container = new Container();
+    this.sprite = new Graphics();
+    this.draw();
+    this.container.addChild(this.sprite);
   }
 
   update(dt: number) {

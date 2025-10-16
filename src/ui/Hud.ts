@@ -11,17 +11,20 @@ interface RankingEntry {
  * HUD respons\u00e1vel por pontua\u00e7\u00f5es, ranking e barras de progresso.
  */
 export class Hud {
-  public readonly container = new Container();
+  public readonly container: Container;
   private readonly scoreText: Text;
   private readonly rankingTitle: Text;
-  private readonly rankingEntries: RankingEntry[] = [];
+  private readonly rankingEntries: RankingEntry[];
   private readonly background: Graphics;
 
-  private width = 0;
+  private width: number;
 
   constructor() {
+    this.container = new Container();
     this.background = new Graphics();
     this.container.addChild(this.background);
+    this.rankingEntries = [];
+    this.width = 0;
 
     this.scoreText = new Text({
       text: 'Score: 0',
