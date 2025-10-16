@@ -1,110 +1,108 @@
 import { Point } from 'pixi.js';
-import { Food } from '../entities/Food';
-import { Snake } from '../entities/Snake';
+import type { Food } from '../entities/Food';
+import type { Snake } from '../entities/Snake';
+
+interface Bounds {
+  width: number;
+  height: number;
+}
 
 /**
- * Controla as 3 cobras de IA com personalidades distintas.
+ * Controla cobras de IA com estilos diferentes.
  */
 export class AISystem {
-  update(snakes: Snake[], foods: Food[]) {
-    const aiSnakes = snakes.filter((snake) => !snake.isPlayer);
+  constructor(
+    private readonly snakes: Snake[],
+    private readonly foods: Food[],
+    private readonly bounds: Bounds
+  ) {}
 
-    for (const snake of aiSnakes) {
-      if (!snake.alive) continue;
+  update(dt: number) {
+    for (const snake of this.snakes) {
+      if (snake.isPlayer || !snake.alive) continue;
+      const head = snake.body[0];
+      if (!head) continue;
 
-      const avoidance = this.computeAvoidanceVector(snake, snakes);
-      const foodVector = this.computeFoodVector(snake, foods);
-      const wander = this.computeWanderVector(snake);
-
-      let target: Point;
-      switch (snake.personality) {
-        case 'aggressive':
-          target = this.combineVectors(foodVector, avoidance, wander, { food: 0.7, avoidance: 0.2, wander: 0.1 });
-          break;
-        case 'cautious':
-          target = this.combineVectors(foodVector, avoidance, wander, { food: 0.4, avoidance: 0.5, wander: 0.1 });
-          break;
-        default:
-          target = this.combineVectors(foodVector, avoidance, wander, { food: 0.5, avoidance: 0.2, wander: 0.3 });
-          break;
+      const nearestFood = this.getNearestFood(head);
+      if (nearestFood) {
+        const desiredAngle = Math.atan2(
+          nearestFood.position.y - head.y,
+          nearestFood.position.x - head.x
+        );
+        this.turnTowards(snake, desiredAngle, dt);
       }
 
-      const desiredAngle = Math.atan2(target.y, target.x);
-      this.applySteering(snake, desiredAngle);
+      this.avoidWalls(snake, head, dt);
+      this.avoidSnakes(snake, head, dt);
     }
   }
 
-  private computeAvoidanceVector(snake: Snake, snakes: Snake[]): Point {
-    const result = new Point();
-    const head = snake.head;
+  private getNearestFood(head: Point): Food | null {
+    let nearest: Food | null = null;
+    let minDist = Number.POSITIVE_INFINITY;
+    for (const food of this.foods) {
+      const dist = Math.hypot(food.position.x - head.x, food.position.y - head.y);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = food;
+      }
+    }
+    return nearest;
+  }
 
-    for (const other of snakes) {
+  private turnTowards(snake: Snake, desiredAngle: number, dt: number) {
+    const diff = this.normalizeAngle(desiredAngle - snake.direction);
+
+    const modifier =
+      snake.behavior === 'aggressive' ? 1.5 : snake.behavior === 'cautious' ? 0.8 : 1;
+    const maxTurn = snake.turnSpeed * modifier * dt;
+    const turn = Math.max(-maxTurn, Math.min(maxTurn, diff));
+    snake.direction += turn;
+  }
+
+  private avoidWalls(snake: Snake, head: Point, dt: number) {
+    const margin = 80;
+    const turnStrength = snake.behavior === 'cautious' ? 2 : 1;
+
+    if (head.x < margin) {
+      snake.direction += snake.turnSpeed * turnStrength * dt;
+    } else if (head.x > this.bounds.width - margin) {
+      snake.direction -= snake.turnSpeed * turnStrength * dt;
+    }
+
+    if (head.y < margin) {
+      snake.direction += snake.turnSpeed * turnStrength * dt;
+    } else if (head.y > this.bounds.height - margin) {
+      snake.direction -= snake.turnSpeed * turnStrength * dt;
+    }
+  }
+
+  private avoidSnakes(snake: Snake, head: Point, dt: number) {
+    const detectionDistance = snake.behavior === 'aggressive' ? 40 : 70;
+    let avoidance = 0;
+
+    for (const other of this.snakes) {
       if (other === snake || !other.alive) continue;
-      const otherHead = other.head;
-      const dx = head.x - otherHead.x;
-      const dy = head.y - otherHead.y;
-      const distanceSq = dx * dx + dy * dy;
-      if (distanceSq === 0) continue;
-      if (distanceSq < 140 * 140) {
-        const weight = 1 / distanceSq;
-        result.x += dx * weight;
-        result.y += dy * weight;
+      for (let i = 0; i < other.body.length; i += 5) {
+        const segment = other.body[i];
+        const dist = Math.hypot(segment.x - head.x, segment.y - head.y);
+        if (dist < detectionDistance) {
+          const angleAway = Math.atan2(head.y - segment.y, head.x - segment.x);
+          const diff = this.normalizeAngle(angleAway - snake.direction);
+          avoidance += diff;
+        }
       }
     }
 
-    return result;
-  }
-
-  private computeFoodVector(snake: Snake, foods: Food[]): Point {
-    const head = snake.head;
-    let bestFood: Food | null = null;
-    let bestDistance = Infinity;
-
-    for (const food of foods) {
-      const pos = food.position;
-      const dx = pos.x - head.x;
-      const dy = pos.y - head.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < bestDistance) {
-        bestFood = food;
-        bestDistance = dist;
-      }
+    if (avoidance !== 0) {
+      const caution = snake.behavior === 'cautious' ? 1.4 : 1;
+      snake.direction += avoidance * 0.5 * caution * dt;
     }
-
-    if (!bestFood) {
-      return new Point(Math.cos(snake.directionAngle), Math.sin(snake.directionAngle));
-    }
-
-    const dx = bestFood.position.x - head.x;
-    const dy = bestFood.position.y - head.y;
-    return new Point(dx, dy);
   }
 
-  private computeWanderVector(snake: Snake): Point {
-    const t = performance.now() / 1000;
-    const offset = snake.id.charCodeAt(0) * 0.5;
-    const angle = snake.directionAngle + Math.sin(t * 0.5 + offset) * 0.8;
-    return new Point(Math.cos(angle), Math.sin(angle));
-  }
-
-  private combineVectors(food: Point, avoidance: Point, wander: Point, weights: { food: number; avoidance: number; wander: number }): Point {
-    const result = new Point(0, 0);
-    result.x = food.x * weights.food + avoidance.x * weights.avoidance + wander.x * weights.wander;
-    result.y = food.y * weights.food + avoidance.y * weights.avoidance + wander.y * weights.wander;
-
-    if (result.x === 0 && result.y === 0) {
-      result.x = 1;
-    }
-
-    return result;
-  }
-
-  private applySteering(snake: Snake, desiredAngle: number) {
-    let diff = desiredAngle - snake.directionAngle;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-
-    const turn = Math.max(-1, Math.min(1, diff / (Math.PI / 2)));
-    snake.setTurnInput(turn);
+  private normalizeAngle(angle: number) {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
   }
 }

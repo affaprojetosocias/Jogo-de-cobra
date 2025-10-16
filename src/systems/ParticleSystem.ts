@@ -1,14 +1,8 @@
-import { Container, Graphics, Point } from 'pixi.js';
-
-interface Particle {
-  sprite: Graphics;
-  velocity: Point;
-  life: number;
-  maxLife: number;
-}
+import { Container, Point } from 'pixi.js';
+import { Emitter } from '@pixi/particle-emitter';
 
 /**
- * Sistema simples para explos\u00f5es de part\u00edculas e efeitos atmosf\u00e9ricos.
+ * Gera partículas tanto para o plano de fundo quanto para explosões de morte.
  */
 export class ParticleSystem {
   public readonly container: Container;
@@ -19,55 +13,82 @@ export class ParticleSystem {
     this.particles = [];
   }
 
-  update(delta: number) {
-    for (let i = this.particles.length - 1; i >= 0; i -= 1) {
-      const particle = this.particles[i];
-      particle.life -= delta;
-      if (particle.life <= 0) {
-        particle.sprite.destroy();
-        this.particles.splice(i, 1);
-        continue;
-      }
+  constructor(private readonly container: Container) {}
 
-      particle.sprite.position.x += particle.velocity.x * delta;
-      particle.sprite.position.y += particle.velocity.y * delta;
-      const progress = particle.life / particle.maxLife;
-      particle.sprite.alpha = progress;
-      particle.sprite.scale.set(0.5 + 0.5 * progress);
-    }
+  emitExplosion(position: Point, color: number) {
+    const emitter = new Emitter(this.container, {
+      lifetime: { min: 0.4, max: 0.8 },
+      frequency: 0.001,
+      spawnChance: 1,
+      particlesPerWave: 12,
+      emitterLifetime: 0.25,
+      maxParticles: 200,
+      autoUpdate: false,
+      behaviors: [
+        {
+          type: 'alpha',
+          config: { alpha: { list: [
+            { value: 1, time: 0 },
+            { value: 0, time: 1 }
+          ] } }
+        },
+        {
+          type: 'scale',
+          config: {
+            scale: {
+              list: [
+                { value: 1.2, time: 0 },
+                { value: 0.2, time: 1 }
+              ]
+            }
+          }
+        },
+        {
+          type: 'moveAcceleration',
+          config: {
+            accel: { x: 0, y: 0 },
+            minStart: 200,
+            maxStart: 320,
+            rotate: true
+          }
+        },
+        {
+          type: 'color',
+          config: {
+            color: {
+              list: [
+                { value: color, time: 0 },
+                { value: 0xffffff, time: 1 }
+              ]
+            }
+          }
+        },
+        {
+          type: 'spawnShape',
+          config: {
+            type: 'ring',
+            data: {
+              x: position.x,
+              y: position.y,
+              radius: { min: 0, max: 10 },
+              innerRadius: 0
+            }
+          }
+        }
+      ]
+    });
+
+    emitter.updateSpawnPos(position.x, position.y);
+    emitter.playOnceAndDestroy(() => {
+      this.emitters.splice(this.emitters.indexOf(emitter), 1);
+    });
+
+    this.emitters.push(emitter);
   }
 
-  spawnExplosion(position: Point, color: number) {
-    const count = 24;
-    for (let i = 0; i < count; i += 1) {
-      const sprite = new Graphics();
-      sprite.beginFill(color, 1);
-      sprite.drawCircle(0, 0, 4 + Math.random() * 4);
-      sprite.endFill();
-      sprite.position.copyFrom(position);
-
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 120 + Math.random() * 220;
-      const velocity = new Point(Math.cos(angle) * speed, Math.sin(angle) * speed);
-      const life = 0.6 + Math.random() * 0.7;
-
-      this.container.addChild(sprite);
-      this.particles.push({ sprite, velocity, life, maxLife: life });
+  update(dt: number) {
+    for (const emitter of this.emitters) {
+      emitter.update(dt);
     }
-  }
-
-  spawnAmbient(width: number, height: number, color: number) {
-    const sprite = new Graphics();
-    sprite.beginFill(color, 0.08);
-    sprite.drawCircle(0, 0, 3 + Math.random() * 6);
-    sprite.endFill();
-    sprite.position.set(Math.random() * width, Math.random() * height);
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 5 + Math.random() * 10;
-    const velocity = new Point(Math.cos(angle) * speed, Math.sin(angle) * speed);
-    const life = 4 + Math.random() * 6;
-
-    this.container.addChild(sprite);
-    this.particles.push({ sprite, velocity, life, maxLife: life });
   }
 }

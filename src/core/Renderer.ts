@@ -1,4 +1,16 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Texture, utils } from 'pixi.js';
+import type { Snake } from '../entities/Snake';
+import type { Food } from '../entities/Food';
+import { ParticleSystem } from '../systems/ParticleSystem';
+import { ScoreBoard } from '../ui/ScoreBoard';
+import { RankingPanel } from '../ui/RankingPanel';
+import type { RankingEntry } from './types';
+
+interface FloatingParticle {
+  graphic: Graphics;
+  velocityX: number;
+  velocityY: number;
+}
 
 /**
  * Encapsula a instância do PixiJS Application e responsável por resize responsivo.
@@ -23,18 +35,19 @@ export class Renderer {
       resizeTo: mount,
       backgroundAlpha: 0,
       antialias: true,
-      powerPreference: 'high-performance'
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true
     });
 
     return new Renderer(mount, app);
   }
 
-  get stage(): Container {
-    return this.app.stage;
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
   }
 
-  get screen() {
-    return this.app.screen;
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
   }
 
   get view(): HTMLCanvasElement {

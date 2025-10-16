@@ -1,7 +1,7 @@
-import { Point } from 'pixi.js';
+import type { Snake } from '../entities/Snake';
 
 /**
- * Captura entrada de teclado e ponteiro para controlar a cobra do jogador.
+ * Gerencia entrada do jogador através do teclado e converte em mudanças de direção.
  */
 export class InputSystem {
   private readonly element: HTMLElement;
@@ -48,31 +48,16 @@ export class InputSystem {
     window.removeEventListener('blur', this.resetListener);
   }
 
-  getTurnInput(directionAngle: number, headPosition: Point): number {
-    let turn = 0;
-    if (this.turnLeft) turn -= 1;
-    if (this.turnRight) turn += 1;
-
-    if (this.pointerActive) {
-      const dx = this.pointerPosition.x - headPosition.x;
-      const dy = this.pointerPosition.y - headPosition.y;
-      const pointerAngle = Math.atan2(dy, dx);
-      let diff = pointerAngle - directionAngle;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      turn = Math.max(-1, Math.min(1, diff * 2));
-    }
-
-    return turn;
-  }
+  update(dt: number) {
+    if (!this.player.alive) return;
 
   private handleKeyDown(event: KeyboardEvent) {
     if (event.repeat) return;
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
       this.turnLeft = true;
     }
-    if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-      this.turnRight = true;
+    if (this.pressed.has('ArrowRight') || this.pressed.has('KeyD')) {
+      directionChange += this.player.turnSpeed * dt;
     }
   }
 

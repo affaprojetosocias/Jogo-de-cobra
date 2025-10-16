@@ -1,19 +1,20 @@
 import { Container, Graphics, Point } from 'pixi.js';
 
-export interface FoodConfig {
-  color: number;
-  radius: number;
-}
-
 /**
- * Representa uma comida flutuante que aumenta o tamanho das cobras.
+ * Comida coletável pelas cobras. Possui sprite simples e animação leve.
  */
 export class Food {
   public readonly container: Container;
   public readonly radius: number;
   public readonly color: number;
 
-  private readonly sprite: Graphics;
+  constructor(position: Point, radius: number, color: number) {
+    this.position = position;
+    this.radius = radius;
+    this.container = new Container();
+    this.graphics = new Graphics();
+    this.container.addChild(this.graphics);
+    this.container.position.copyFrom(position);
 
   constructor(config: FoodConfig) {
     this.radius = config.radius;
@@ -24,21 +25,20 @@ export class Food {
     this.container.addChild(this.sprite);
   }
 
-  set position(point: Point) {
-    this.container.position.copyFrom(point);
+  update(dt: number) {
+    this.pulse += dt * 5;
+    const scale = 0.9 + Math.sin(this.pulse) * 0.1;
+    this.container.scale.set(scale, scale);
   }
 
-  get position(): Point {
-    return this.container.position.clone();
-  }
+  private draw(color: number) {
+    this.graphics.clear();
+    this.graphics.beginFill(color, 0.6);
+    this.graphics.drawCircle(0, 0, this.radius + 6);
+    this.graphics.endFill();
 
-  private draw() {
-    this.sprite.clear();
-    this.sprite.beginFill(this.color, 0.25);
-    this.sprite.drawCircle(0, 0, this.radius * 1.8);
-    this.sprite.endFill();
-    this.sprite.beginFill(this.color, 0.85);
-    this.sprite.drawCircle(0, 0, this.radius);
-    this.sprite.endFill();
+    this.graphics.beginFill(color, 1);
+    this.graphics.drawCircle(0, 0, this.radius);
+    this.graphics.endFill();
   }
 }
