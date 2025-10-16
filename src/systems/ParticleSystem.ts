@@ -1,94 +1,58 @@
-import { Container, Point } from 'pixi.js';
-import { Emitter } from '@pixi/particle-emitter';
+import { Container, Graphics, Point } from 'pixi.js';
+
+interface Particle {
+  sprite: Graphics;
+  velocity: Point;
+  lifetime: number;
+  maxLifetime: number;
+}
 
 /**
- * Gera partículas tanto para o plano de fundo quanto para explosões de morte.
+ * Sistema simples de partículas para explosões ao morrer.
  */
 export class ParticleSystem {
   public readonly container: Container;
-  private readonly particles: Particle[];
+  private readonly particles: Particle[] = [];
 
   constructor() {
     this.container = new Container();
-    this.particles = [];
   }
 
-  constructor(private readonly container: Container) {}
-
   emitExplosion(position: Point, color: number) {
-    const emitter = new Emitter(this.container, {
-      lifetime: { min: 0.4, max: 0.8 },
-      frequency: 0.001,
-      spawnChance: 1,
-      particlesPerWave: 12,
-      emitterLifetime: 0.25,
-      maxParticles: 200,
-      autoUpdate: false,
-      behaviors: [
-        {
-          type: 'alpha',
-          config: { alpha: { list: [
-            { value: 1, time: 0 },
-            { value: 0, time: 1 }
-          ] } }
-        },
-        {
-          type: 'scale',
-          config: {
-            scale: {
-              list: [
-                { value: 1.2, time: 0 },
-                { value: 0.2, time: 1 }
-              ]
-            }
-          }
-        },
-        {
-          type: 'moveAcceleration',
-          config: {
-            accel: { x: 0, y: 0 },
-            minStart: 200,
-            maxStart: 320,
-            rotate: true
-          }
-        },
-        {
-          type: 'color',
-          config: {
-            color: {
-              list: [
-                { value: color, time: 0 },
-                { value: 0xffffff, time: 1 }
-              ]
-            }
-          }
-        },
-        {
-          type: 'spawnShape',
-          config: {
-            type: 'ring',
-            data: {
-              x: position.x,
-              y: position.y,
-              radius: { min: 0, max: 10 },
-              innerRadius: 0
-            }
-          }
-        }
-      ]
-    });
+    const count = 18;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+      const speed = 80 + Math.random() * 160;
+      const velocity = new Point(Math.cos(angle) * speed, Math.sin(angle) * speed);
 
-    emitter.updateSpawnPos(position.x, position.y);
-    emitter.playOnceAndDestroy(() => {
-      this.emitters.splice(this.emitters.indexOf(emitter), 1);
-    });
+      const sprite = new Graphics();
+      sprite.beginFill(color, 0.9);
+      sprite.drawCircle(0, 0, 4 + Math.random() * 3);
+      sprite.endFill();
+      sprite.position.copyFrom(position);
 
-    this.emitters.push(emitter);
+      this.container.addChild(sprite);
+      this.particles.push({ sprite, velocity, lifetime: 0, maxLifetime: 0.8 + Math.random() * 0.4 });
+    }
   }
 
   update(dt: number) {
-    for (const emitter of this.emitters) {
-      emitter.update(dt);
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const particle = this.particles[i];
+      particle.lifetime += dt;
+      if (particle.lifetime >= particle.maxLifetime) {
+        this.container.removeChild(particle.sprite);
+        particle.sprite.destroy();
+        this.particles.splice(i, 1);
+        continue;
+      }
+
+      particle.sprite.x += particle.velocity.x * dt;
+      particle.sprite.y += particle.velocity.y * dt;
+      const progress = particle.lifetime / particle.maxLifetime;
+      particle.sprite.alpha = 1 - progress;
+      const scale = 1 + progress * 0.4;
+      particle.sprite.scale.set(scale);
     }
   }
 }

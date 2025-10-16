@@ -1,63 +1,81 @@
+import { Point } from 'pixi.js';
 import type { Snake } from '../entities/Snake';
 
 /**
- * Gerencia entrada do jogador através do teclado e converte em mudanças de direção.
+ * Traduz entradas de teclado e ponteiro para comandos de curva da cobra.
  */
 export class InputSystem {
   private readonly element: HTMLElement;
-  private turnLeft: boolean;
-  private turnRight: boolean;
-  private pointerActive: boolean;
-  private pointerPosition: Point;
+  private readonly player: Snake;
+
+  private turnLeft = false;
+  private turnRight = false;
+
+  private pointerActive = false;
+  private pointerPosition = new Point();
 
   private readonly keyDownListener: (event: KeyboardEvent) => void;
   private readonly keyUpListener: (event: KeyboardEvent) => void;
   private readonly pointerDownListener: (event: PointerEvent) => void;
   private readonly pointerMoveListener: (event: PointerEvent) => void;
-  private readonly pointerUpListener: (event: PointerEvent) => void;
-  private readonly resetListener: () => void;
+  private readonly pointerUpListener: () => void;
+  private readonly blurListener: () => void;
 
-  constructor(element: HTMLElement) {
+  constructor(element: HTMLElement, player: Snake) {
     this.element = element;
-    this.turnLeft = false;
-    this.turnRight = false;
-    this.pointerActive = false;
-    this.pointerPosition = new Point();
+    this.player = player;
 
-    this.keyDownListener = this.handleKeyDown.bind(this);
-    this.keyUpListener = this.handleKeyUp.bind(this);
-    this.pointerDownListener = this.handlePointerDown.bind(this);
-    this.pointerMoveListener = this.handlePointerMove.bind(this);
-    this.pointerUpListener = this.handlePointerUp.bind(this);
-    this.resetListener = this.resetInputState.bind(this);
+    this.keyDownListener = (event) => this.handleKeyDown(event);
+    this.keyUpListener = (event) => this.handleKeyUp(event);
+    this.pointerDownListener = (event) => this.handlePointerDown(event);
+    this.pointerMoveListener = (event) => this.handlePointerMove(event);
+    this.pointerUpListener = () => this.handlePointerUp();
+    this.blurListener = () => this.reset();
 
     window.addEventListener('keydown', this.keyDownListener);
     window.addEventListener('keyup', this.keyUpListener);
-    element.addEventListener('pointerdown', this.pointerDownListener);
-    element.addEventListener('pointermove', this.pointerMoveListener);
     window.addEventListener('pointerup', this.pointerUpListener);
-    window.addEventListener('blur', this.resetListener);
+    window.addEventListener('blur', this.blurListener);
+    this.element.addEventListener('pointerdown', this.pointerDownListener);
+    this.element.addEventListener('pointermove', this.pointerMoveListener);
   }
 
   destroy() {
     window.removeEventListener('keydown', this.keyDownListener);
     window.removeEventListener('keyup', this.keyUpListener);
+    window.removeEventListener('pointerup', this.pointerUpListener);
+    window.removeEventListener('blur', this.blurListener);
     this.element.removeEventListener('pointerdown', this.pointerDownListener);
     this.element.removeEventListener('pointermove', this.pointerMoveListener);
-    window.removeEventListener('pointerup', this.pointerUpListener);
-    window.removeEventListener('blur', this.resetListener);
   }
 
-  update(dt: number) {
-    if (!this.player.alive) return;
+  update() {
+    if (!this.player.alive) {
+      this.player.setTurnInput(0);
+      return;
+    }
+
+    let turn = 0;
+    if (this.turnLeft) turn -= 1;
+    if (this.turnRight) turn += 1;
+
+    if (this.pointerActive) {
+      const rect = this.element.getBoundingClientRect();
+      const center = rect.width / 2;
+      const offset = (this.pointerPosition.x - center) / center;
+      turn += Math.max(-1, Math.min(1, offset));
+    }
+
+    this.player.setTurnInput(turn);
+  }
 
   private handleKeyDown(event: KeyboardEvent) {
     if (event.repeat) return;
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
       this.turnLeft = true;
     }
-    if (this.pressed.has('ArrowRight') || this.pressed.has('KeyD')) {
-      directionChange += this.player.turnSpeed * dt;
+    if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+      this.turnRight = true;
     }
   }
 
@@ -89,9 +107,10 @@ export class InputSystem {
     this.pointerPosition.set(event.clientX - rect.left, event.clientY - rect.top);
   }
 
-  private resetInputState() {
+  private reset() {
     this.turnLeft = false;
     this.turnRight = false;
     this.pointerActive = false;
+    this.player.setTurnInput(0);
   }
 }
