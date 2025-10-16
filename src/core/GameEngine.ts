@@ -33,12 +33,33 @@ export class GameEngine {
     this.renderer = renderer;
   }
 
-  static async bootstrap(container: HTMLElement) {
-    const renderer = await Renderer.create(window.innerWidth, window.innerHeight);
-    const engine = new GameEngine(renderer);
-    renderer.mount(container);
-    engine.initialize();
-    return engine;
+  private ambientTimer = 0;
+
+  static async create(mount: HTMLElement): Promise<GameEngine> {
+    const renderer = await Renderer.create(mount);
+    return new GameEngine(renderer);
+  }
+
+  private constructor(renderer: Renderer) {
+    this.renderer = renderer;
+    this.worldBounds = new Rectangle(0, 0, this.renderer.screen.width, this.renderer.screen.height);
+    this.background = new Background(this.worldBounds.width, this.worldBounds.height);
+
+    this.renderer.stage.addChild(this.background.container);
+    this.renderer.stage.addChild(this.particleSystem.container);
+    this.renderer.stage.addChild(this.foodLayer);
+    this.renderer.stage.addChild(this.snakeLayer);
+    this.renderer.stage.addChild(this.hud.container);
+
+    this.input = new InputSystem(this.renderer.view);
+    this.soundSystem.unlock();
+
+    this.loop = new Loop((delta) => this.update(delta));
+
+    window.addEventListener('resize', this.handleResize);
+    this.initializeSnakes();
+    this.initializeFood();
+    this.hud.resize(this.worldBounds.width);
   }
 
   start() {

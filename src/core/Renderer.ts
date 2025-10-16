@@ -13,8 +13,7 @@ interface FloatingParticle {
 }
 
 /**
- * Responsável por instanciar e organizar a cena Pixi, incluindo plano de fundo,
- * entidades e elementos de UI.
+ * Encapsula a instância do PixiJS Application e responsável por resize responsivo.
  */
 export class Renderer {
   public readonly app: Application;
@@ -61,92 +60,22 @@ export class Renderer {
 
     this.createFloatingParticles();
 
-    this.particleSystem = new ParticleSystem(this.entityLayer);
-
-    this.scoreboard = new ScoreBoard();
-    this.uiLayer.addChild(this.scoreboard.container);
-
-    this.rankingPanel = new RankingPanel();
-    this.uiLayer.addChild(this.rankingPanel.container);
-
-    window.addEventListener('resize', () => this.resize());
-    this.resize();
+  private constructor(private readonly mount: HTMLElement, app: Application) {
+    this.app = app;
+    this.mount.appendChild(this.app.canvas as HTMLCanvasElement);
   }
 
-  static async create(width: number, height: number) {
-    const app = await Application.init({
-      width,
-      height,
+  static async create(mount: HTMLElement): Promise<Renderer> {
+    const app = new Application();
+    await app.init({
+      resizeTo: mount,
       backgroundAlpha: 0,
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true
     });
 
-    return new Renderer(app);
-  }
-
-  mount(target: HTMLElement) {
-    target.appendChild(this.app.canvas);
-  }
-
-  addSnake(snake: Snake) {
-    this.snakeLayer.addChild(snake.container);
-  }
-
-  removeSnake(snake: Snake) {
-    this.snakeLayer.removeChild(snake.container);
-  }
-
-  addFood(food: Food) {
-    this.foodLayer.addChild(food.container);
-  }
-
-  removeFood(food: Food) {
-    this.foodLayer.removeChild(food.container);
-  }
-
-  updateScore(score: number) {
-    this.scoreboard.update(score);
-  }
-
-  updateRanking(entries: RankingEntry[], maxLength: number) {
-    this.rankingPanel.update(entries, maxLength);
-  }
-
-  updateBackground(dt: number) {
-    this.gradientTimer += dt;
-    this.gradientPhase += dt * 0.2;
-
-    if (this.gradientTimer >= 0.3 || this.gradientDirty) {
-      this.gradientTimer = 0;
-      this.gradientDirty = false;
-      const hueA = (this.gradientPhase * 60) % 360;
-      const hueB = (hueA + 120) % 360;
-      const colorA = utils.string2hex(`hsl(${hueA}, 80%, 12%)`);
-      const colorB = utils.string2hex(`hsl(${hueB}, 90%, 18%)`);
-
-      const texture = this.createGradientTexture(
-        this.app.renderer.width,
-        this.app.renderer.height,
-        colorA,
-        colorB
-      );
-      this.backgroundGradient.texture.destroy(true);
-      this.backgroundGradient.texture = texture;
-      this.backgroundGradient.width = this.app.renderer.width;
-      this.backgroundGradient.height = this.app.renderer.height;
-    }
-
-    for (const particle of this.floatingParticles) {
-      particle.graphic.x += particle.velocityX * dt * 60;
-      particle.graphic.y += particle.velocityY * dt * 60;
-
-      if (particle.graphic.x > this.app.renderer.width) particle.graphic.x = 0;
-      if (particle.graphic.x < 0) particle.graphic.x = this.app.renderer.width;
-      if (particle.graphic.y > this.app.renderer.height) particle.graphic.y = 0;
-      if (particle.graphic.y < 0) particle.graphic.y = this.app.renderer.height;
-    }
+    return new Renderer(mount, app);
   }
 
   resize() {
@@ -178,23 +107,12 @@ export class Renderer {
     return Texture.from(canvas);
   }
 
-  private createFloatingParticles() {
-    const count = 60;
-    for (let i = 0; i < count; i++) {
-      const graphic = new Graphics();
-      graphic.beginFill(0xffffff, 0.05);
-      graphic.drawCircle(0, 0, Math.random() * 2 + 1);
-      graphic.endFill();
-      const width = this.app.renderer.width || window.innerWidth;
-      const height = this.app.renderer.height || window.innerHeight;
-      graphic.x = Math.random() * width;
-      graphic.y = Math.random() * height;
-      this.backgroundLayer.addChild(graphic);
-      this.floatingParticles.push({
-        graphic,
-        velocityX: (Math.random() - 0.5) * 0.2,
-        velocityY: (Math.random() - 0.5) * 0.2
-      });
-    }
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
+  }
+
+  destroy() {
+    this.app.destroy();
+    this.mount.innerHTML = '';
   }
 }
