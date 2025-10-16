@@ -1,0 +1,6 @@
+import { writeFile } from 'node:fs/promises';
+
+const content = `# Snake.io+ \ud83d\udc0d\n\nUm protótipo moderno do jogo Snake.io feito com TypeScript, Vite e Pixi.js.\n\n## Requisitos\n- Node.js 18 ou superior\n- npm 9 ou superior\n\n## Instala\u00e7\u00e3o\n\n\`\`\`bash\nnpm install\n\`\`\`\n\n## Desenvolvimento\n\n\`\`\`bash\nnpm run dev\n\`\`\`\n\nO servidor ser\u00e1 iniciado em [http://localhost:5173](http://localhost:5173).\n\n## Build de produ\u00e7\u00e3o\n\n\`\`\`bash\nnpm run build\n\`\`\`\n\n## Preview da build\n\n\`\`\`bash\nnpm run preview\n\`\`\`\n\n## Gera\u00e7\u00e3o deste README\n\n\`\`\`bash\nnpm run generate:readme\n\`\`\`\n\n## Estrutura do projeto\n\n- \`src/core\`: loop do jogo, motor e servi\u00e7os compartilhados\n- \`src/entities\`: entidades principais (cobras e comidas)\n- \`src/systems\`: sistemas de entrada, IA, som e colis\u00f5es\n- \`src/ui\`: componentes de interface e HUD\n\n## Controles\n\n- \`A\` ou \u2190: girar para a esquerda\n- \`D\` ou \u2192: girar para a direita\n- Toque/arraste no mobile: acompanha a dire\u00e7\u00e3o do dedo\n\nAproveite para expandir este prot\u00f3tipo para multiplayer real usando WebSockets ou Supabase Realtime!\n`;
+
+await writeFile(new URL('../README.md', import.meta.url), content, 'utf-8');
+console.log('README gerado com sucesso.');
