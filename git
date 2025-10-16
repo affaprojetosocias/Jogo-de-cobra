@@ -1,7 +1,0 @@
-eco "# Jogo-de-cobra" >> README.md
-git init
-git adicionar README.md
-git commit -m "primeiro commit"
-git branch -M Diretor
-git remoto adicionar origem https://github.com/affaprojetosocias/Jogo-de-cobra.git
-git push -u origem Principal
