@@ -51,16 +51,11 @@ export class Renderer {
     this.entityLayer.addChild(this.snakeLayer);
     this.stage.addChild(this.uiLayer);
 
-    this.backgroundGradient = new Sprite(
-      this.createGradientTexture(app.renderer.width || window.innerWidth, app.renderer.height || window.innerHeight)
-    );
-    this.backgroundGradient.width = app.renderer.width;
-    this.backgroundGradient.height = app.renderer.height;
-    this.backgroundLayer.addChild(this.backgroundGradient);
-
-    this.createFloatingParticles();
-
-  private constructor(private readonly mount: HTMLElement, app: Application) {
+  /**
+   * Prefer {@link Renderer.create} so that the Pixi application is fully initialised
+   * before consumers interact with it.
+   */
+  constructor(private readonly mount: HTMLElement, app: Application) {
     this.app = app;
     this.mount.appendChild(this.app.canvas as HTMLCanvasElement);
   }
@@ -76,17 +71,6 @@ export class Renderer {
     });
 
     return new Renderer(mount, app);
-  }
-
-  resize() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    this.app.renderer.resize(width, height);
-    this.backgroundGradient.width = width;
-    this.backgroundGradient.height = height;
-    this.backgroundGradient.texture.destroy(true);
-    this.backgroundGradient.texture = this.createGradientTexture(width, height);
-    this.gradientDirty = true;
   }
 
   private createGradientTexture(width: number, height: number, colorA?: number, colorB?: number) {
@@ -105,6 +89,10 @@ export class Renderer {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
     return Texture.from(canvas);
+  }
+
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
   }
 
   get view(): HTMLCanvasElement {

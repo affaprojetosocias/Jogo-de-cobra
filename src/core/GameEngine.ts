@@ -40,7 +40,11 @@ export class GameEngine {
     return new GameEngine(renderer);
   }
 
-  private constructor(renderer: Renderer) {
+  /**
+   * Use {@link GameEngine.create} to instantiate the engine so that the renderer is
+   * properly initialised before the rest of the systems are mounted.
+   */
+  constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.worldBounds = new Rectangle(0, 0, this.renderer.screen.width, this.renderer.screen.height);
     this.background = new Background(this.worldBounds.width, this.worldBounds.height);
