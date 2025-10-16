@@ -29,10 +29,12 @@ export class Hud {
         fill: '#ffffff',
         fontSize: 24,
         fontFamily: 'Segoe UI',
-        dropShadow: true,
-        dropShadowBlur: 4,
-        dropShadowAlpha: 0.6,
-        dropShadowColor: '#0ff'
+        dropShadow: {
+          color: '#0ff',
+          blur: 4,
+          alpha: 0.6,
+          distance: 4
+        }
       })
     });
     this.scoreText.position.set(20, 20);
@@ -45,10 +47,12 @@ export class Hud {
         fontSize: 18,
         fontFamily: 'Segoe UI',
         letterSpacing: 1,
-        dropShadow: true,
-        dropShadowBlur: 3,
-        dropShadowAlpha: 0.5,
-        dropShadowColor: '#0ff'
+        dropShadow: {
+          color: '#0ff',
+          blur: 3,
+          alpha: 0.5,
+          distance: 4
+        }
       })
     });
     this.rankingTitle.position.set(20, 60);
@@ -78,10 +82,12 @@ export class Hud {
           fill: '#e0f7ff',
           fontSize: 14,
           fontFamily: 'Segoe UI',
-          dropShadow: true,
-          dropShadowBlur: 4,
-          dropShadowDistance: 0,
-          dropShadowColor: '#0ff'
+          dropShadow: {
+            color: '#0ff',
+            blur: 4,
+            distance: 0,
+            alpha: 0.5
+          }
         })
       });
       this.container.addChild(bar);
