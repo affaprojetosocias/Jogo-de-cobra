@@ -32,8 +32,13 @@ export class GameEngine {
 
   private ambientTimer = 0;
 
-  constructor(mount: HTMLElement) {
-    this.renderer = new Renderer(mount);
+  static async create(mount: HTMLElement): Promise<GameEngine> {
+    const renderer = await Renderer.create(mount);
+    return new GameEngine(renderer);
+  }
+
+  private constructor(renderer: Renderer) {
+    this.renderer = renderer;
     this.worldBounds = new Rectangle(0, 0, this.renderer.screen.width, this.renderer.screen.height);
     this.background = new Background(this.worldBounds.width, this.worldBounds.height);
 
@@ -43,7 +48,7 @@ export class GameEngine {
     this.renderer.stage.addChild(this.snakeLayer);
     this.renderer.stage.addChild(this.hud.container);
 
-    this.input = new InputSystem(this.renderer.app.view as HTMLCanvasElement);
+    this.input = new InputSystem(this.renderer.view);
     this.soundSystem.unlock();
 
     this.loop = new Loop((delta) => this.update(delta));

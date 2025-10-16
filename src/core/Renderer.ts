@@ -1,20 +1,26 @@
 import { Application, Container } from 'pixi.js';
 
 /**
- * Encapsula a instancia do PixiJS Application e respons\u00e1vel por resize responsivo.
+ * Encapsula a instância do PixiJS Application e responsável por resize responsivo.
  */
 export class Renderer {
   public readonly app: Application;
 
-  constructor(private readonly mount: HTMLElement) {
-    this.app = new Application({
+  private constructor(private readonly mount: HTMLElement, app: Application) {
+    this.app = app;
+    this.mount.appendChild(this.app.canvas as HTMLCanvasElement);
+  }
+
+  static async create(mount: HTMLElement): Promise<Renderer> {
+    const app = new Application();
+    await app.init({
       resizeTo: mount,
       backgroundAlpha: 0,
       antialias: true,
       powerPreference: 'high-performance'
     });
 
-    mount.appendChild(this.app.view as HTMLCanvasElement);
+    return new Renderer(mount, app);
   }
 
   get stage(): Container {
@@ -25,8 +31,12 @@ export class Renderer {
     return this.app.screen;
   }
 
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
+  }
+
   destroy() {
-    this.app.destroy(true, { children: true, texture: true, baseTexture: true });
+    this.app.destroy();
     this.mount.innerHTML = '';
   }
 }
