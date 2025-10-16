@@ -45,12 +45,6 @@ export class Renderer {
     this.snakeLayer = new Container();
     this.uiLayer = new Container();
 
-    this.stage.addChild(this.backgroundLayer);
-    this.stage.addChild(this.entityLayer);
-    this.entityLayer.addChild(this.foodLayer);
-    this.entityLayer.addChild(this.snakeLayer);
-    this.stage.addChild(this.uiLayer);
-
   /**
    * Prefer {@link Renderer.create} so that the Pixi application is fully initialised
    * before consumers interact with it.
@@ -73,22 +67,8 @@ export class Renderer {
     return new Renderer(mount, app);
   }
 
-  private createGradientTexture(width: number, height: number, colorA?: number, colorB?: number) {
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.floor(width));
-    canvas.height = Math.max(1, Math.floor(height));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      return Texture.WHITE;
-    }
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    const startColor = colorA ?? 0x040b1f;
-    const endColor = colorB ?? 0x080f3f;
-    gradient.addColorStop(0, `#${startColor.toString(16).padStart(6, '0')}`);
-    gradient.addColorStop(1, `#${endColor.toString(16).padStart(6, '0')}`);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-    return Texture.from(canvas);
+  get view(): HTMLCanvasElement {
+    return this.app.canvas as HTMLCanvasElement;
   }
 
   get view(): HTMLCanvasElement {
