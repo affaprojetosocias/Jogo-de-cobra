@@ -1,10 +1,18 @@
 import { GameEngine } from './core/GameEngine';
 
-const appElement = document.getElementById('app');
+async function bootstrap() {
+  const appElement = document.getElementById('app');
 
-if (!appElement) {
-  throw new Error('Elemento raiz #app n\u00e3o encontrado.');
+  if (!appElement) {
+    throw new Error('Elemento raiz #app não encontrado.');
+  }
+
+  try {
+    const engine = await GameEngine.create(appElement);
+    engine.start();
+  } catch (error) {
+    console.error('Falha ao iniciar o jogo', error);
+  }
 }
 
-const engine = new GameEngine(appElement);
-engine.start();
+bootstrap();
